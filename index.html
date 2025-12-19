@@ -46,9 +46,9 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <select id="pista">
 <option value="">Selecionar...</option>
 <option>CALDAS Bowling</option>
-<option>FIGUEIRA DA FOZ 3Chamines</option>
+<option>FIGUEIRA DA FOZ</option>
 <option>SINTRA Beloura</option>
-<option>PORTIMÃO Rocha</option>
+<option>PORTIMÃO</option>
 <option>OVAR Bowlikart</option>
 </select>
 
@@ -81,13 +81,14 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <thead>
 <tr>
 <th>DIA</th>
-<th>JOGOS</th>
+<th>JOGO</th>
 <th>PTS</th>
-<th>STR</th>
-<th>SPA</th>
-<th>MÉDIA</th>
+<th>X</th>
+<th>/</th>
+<th>MED</th>
 <th>STRIKE</th>
 <th>SPARE</th>
+<th>PISTA</th>
 <th>APAGAR</th>
 </tr>
 </thead>
@@ -148,7 +149,8 @@ pontos:+pontos.value,
 strikes:+strikes.value||0,
 spares:+spares.value||0,
 bolaStrike:bolaStrike.value,
-bolaSpare:bolaSpare.value
+bolaSpare:bolaSpare.value,
+pista:pista.value
 });
 localStorage.setItem('treinos',JSON.stringify(treinos));
 btn.classList.add('sucesso');
@@ -191,6 +193,7 @@ hist.innerHTML+=`
 <td>${i==0?`<span class="media-dia">${media}</span>`:''}</td>
 <td>${j.bolaStrike}</td>
 <td>${j.bolaSpare}</td>
+<td>${j.pista}</td>
 <td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(j)})">X</button></td>
 </tr>`;
 });
@@ -202,7 +205,7 @@ desenharGrafico();
 function desenharGrafico(){
 const ctx=document.getElementById('grafico');
 if(chart)chart.destroy();
-const ult=treinos.slice(-10);
+const ult=[...treinos].sort((a,b)=>new Date(a.data)-new Date(b.data)).slice(-10);
 chart=new Chart(ctx,{
 type:'line',
 data:{
