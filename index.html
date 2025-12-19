@@ -107,102 +107,65 @@ button.apagar-btn { background: #e74c3c; color: white; border: none; border-radi
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// --- CONFIGURAÇÃO INICIAL DAS BOLAS ---
-const listaPadrao = [
-  'Raw Hibrida (HAMMER)',
-  'NoRulesExist (ROTOGRIP)',
-  'Fire Power (STORM)',
-  'Ultimate Wrecker (ROTOGRIP)',
-  'DV8',
-  'RHINO',
-  'BRUNSWICK',
-  'Clear Belmo (STORM)'
-];
-let bolas = JSON.parse(localStorage.getItem('bolas')) || listaPadrao;
-let treinos = JSON.parse(localStorage.getItem('treinos')) || [];
-document.getElementById('data').valueAsDate = new Date();
+// --- BOLAS ---
+const listaPadrao=['Raw Hibrida (HAMMER)','NoRulesExist (ROTOGRIP)','Fire Power (STORM)','Ultimate Wrecker (ROTOGRIP)','DV8','RHINO','BRUNSWICK','Clear Belmo (STORM)'];
+let bolas=JSON.parse(localStorage.getItem('bolas'))||listaPadrao;
+let treinos=JSON.parse(localStorage.getItem('treinos'))||[];
+document.getElementById('data').valueAsDate=new Date();
 
-function atualizarTudoBolas() {
-    localStorage.setItem('bolas', JSON.stringify(bolas));
-    const selectStrike = document.getElementById('bolaStrike');
-    const selectSpare = document.getElementById('bolaSpare');
-    let htmlOpcoes = '<option value="">Selecc...</option>';
-    bolas.forEach(b => { htmlOpcoes += `<option value="${b}">${b}</option>`; });
-    selectStrike.innerHTML = htmlOpcoes;
-    selectSpare.innerHTML = htmlOpcoes;
-    const divLista = document.getElementById('listaBolas');
-    divLista.innerHTML = bolas.map((b,i)=>`
-        <div class="bola-item">
-            <span>${b}</span>
-            <button class="bola-del-btn" onclick="removerBola(${i})">X</button>
-        </div>
-    `).join('');
+function atualizarTudoBolas(){
+    localStorage.setItem('bolas',JSON.stringify(bolas));
+    const selectStrike=document.getElementById('bolaStrike');
+    const selectSpare=document.getElementById('bolaSpare');
+    let htmlOpcoes='<option value="">Selecc...</option>';
+    bolas.forEach(b=>{htmlOpcoes+=`<option value="${b}">${b}</option>`;});
+    selectStrike.innerHTML=htmlOpcoes; selectSpare.innerHTML=htmlOpcoes;
+    const divLista=document.getElementById('listaBolas');
+    divLista.innerHTML=bolas.map((b,i)=>`<div class="bola-item"><span>${b}</span><button class="bola-del-btn" onclick="removerBola(${i})">X</button></div>`).join('');
 }
-function adicionarNovaBola() {
-    const nome = document.getElementById('novaBolaNome').value;
-    if(nome.trim()!==""){ bolas.push(nome.trim()); document.getElementById('novaBolaNome').value=""; atualizarTudoBolas(); }
-}
+function adicionarNovaBola(){ const nome=document.getElementById('novaBolaNome').value; if(nome.trim()!==""){ bolas.push(nome.trim()); document.getElementById('novaBolaNome').value=""; atualizarTudoBolas(); } }
 function removerBola(i){ if(confirm("Desejas eliminar esta bola da tua coleção?")){ bolas.splice(i,1); atualizarTudoBolas(); } }
 atualizarTudoBolas();
 
 // --- BOTÃO GUARDAR ---
-const guardarBtn = document.getElementById('guardarBtn');
-function guardar() {
-    const pts = document.getElementById('pontos').value;
-    const pst = document.getElementById('pista').value;
-    const dt = document.getElementById('data').value;
-    const strikeBola = document.getElementById('bolaStrike').value;
-    const spareBola = document.getElementById('bolaSpare').value;
+const guardarBtn=document.getElementById('guardarBtn');
+function guardar(){
+    const pts=document.getElementById('pontos').value;
+    const pst=document.getElementById('pista').value;
+    const dt=document.getElementById('data').value;
+    const strikeBola=document.getElementById('bolaStrike').value;
+    const spareBola=document.getElementById('bolaSpare').value;
     if(!pts||!pst||!dt){alert("Faltam dados: Pista, Data e Pontos são obrigatórios!"); return;}
-    const reg = {data:dt, pontos:parseInt(pts), strikes:document.getElementById('strikes').value||0, spares:document.getElementById('spares').value||0, pista:pst, bolaStrike:strikeBola, bolaSpare:spareBola};
-    treinos.push(reg); localStorage.setItem('treinos', JSON.stringify(treinos));
+    const reg={data:dt,pontos:parseInt(pts),strikes:document.getElementById('strikes').value||0,spares:document.getElementById('spares').value||0,pista:pst,bolaStrike:strikeBola,bolaSpare:spareBola};
+    treinos.push(reg); localStorage.setItem('treinos',JSON.stringify(treinos));
     document.getElementById('pontos').value=""; document.getElementById('strikes').value=""; document.getElementById('spares').value="";
     guardarBtn.style.background='#27ae60'; guardarBtn.innerText='STRIKE';
     render();
-    setTimeout(()=>{ guardarBtn.style.background='#f39c12'; guardarBtn.innerText='GUARDAR REGISTO'; },5000);
+    setTimeout(()=>{guardarBtn.style.background='#f39c12'; guardarBtn.innerText='GUARDAR REGISTO';},5000);
 }
 
-// --- HISTÓRICO + MÉDIA ---
+// --- HISTÓRICO ---
 function apagarTreino(i){ if(confirm("Eliminar este registo de treino?")){ treinos.splice(i,1); localStorage.setItem('treinos',JSON.stringify(treinos)); render(); } }
+
 function render(){
     const ordenados=[...treinos].sort((a,b)=>new Date(a.data)-new Date(b.data));
-    let html=''; let lastDate=''; let diaTreinos=[]; let contador=0;
+    let html=''; let lastDate=''; let contador=0;
     ordenados.forEach((t,i)=>{
-        if(t.data!==lastDate){
-            if(diaTreinos.length>0){
-                const media=Math.round(diaTreinos.reduce((s,v)=>s+v.pontos,0)/diaTreinos.length);
-                const primeiraLinha=document.querySelector(`#hist tr[data-dia='${lastDate}'] .media-dia`);
-                if(primeiraLinha){ primeiraLinha.innerText=media; primeiraLinha.style.opacity=1; }
-            }
-            lastDate=t.data; diaTreinos=[]; contador=1;
-            html+=`<tr data-dia="${t.data}">
-                <td>${t.data.split('-').reverse().slice(0,2).join('/')}</td>
-                <td>${contador}</td>
-                <td>${t.pontos}</td>
-                <td>${t.strikes}</td>
-                <td>${t.spares}</td>
-                <td class="media-dia">__media__</td>
-                <td>${t.bolaStrike||''}</td>
-                <td>${t.bolaSpare||''}</td>
-                <td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td>
-            </tr>`;
-        } else {
-            contador++;
-            html+=`<tr data-dia="${t.data}">
-                <td></td><td>${contador}</td><td>${t.pontos}</td><td>${t.strikes}</td><td>${t.spares}</td>
-                <td></td>
-                <td>${t.bolaStrike||''}</td><td>${t.bolaSpare||''}</td>
-                <td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td>
-            </tr>`;
-        }
-        diaTreinos.push(t);
+        if(t.data!==lastDate){ lastDate=t.data; contador=1;
+            html+=`<tr data-dia="${t.data}"><td>${t.data.split('-').reverse().slice(0,2).join('/')}</td><td>${contador}</td><td>${t.pontos}</td><td>${t.strikes}</td><td>${t.spares}</td><td class="media-dia">__media__</td><td>${t.bolaStrike||''}</td><td>${t.bolaSpare||''}</td><td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td></tr>`;
+        } else { contador++; html+=`<tr data-dia="${t.data}"><td></td><td>${contador}</td><td>${t.pontos}</td><td>${t.strikes}</td><td>${t.spares}</td><td class="media-dia"></td><td>${t.bolaStrike||''}</td><td>${t.bolaSpare||''}</td><td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td></tr>`; }
     });
-    if(diaTreinos.length>0){
-        const media=Math.round(diaTreinos.reduce((s,v)=>s+v.pontos,0)/diaTreinos.length);
-        const primeiraLinha=document.querySelector(`#hist tr[data-dia='${lastDate}'] .media-dia`);
-        if(primeiraLinha){ primeiraLinha.innerText=media; primeiraLinha.style.opacity=1; }
-    }
     document.getElementById('hist').innerHTML=html;
+
+    // médias diárias
+    const dias=[...new Set(ordenados.map(t=>t.data))];
+    dias.forEach(dia=>{
+        const treinosDoDia=ordenados.filter(t=>t.data===dia);
+        const media=Math.round(treinosDoDia.reduce((s,v)=>s+v.pontos,0)/treinosDoDia.length);
+        const primeiraLinha=document.querySelector(`#hist tr[data-dia='${dia}'] .media-dia`);
+        if(primeiraLinha){ primeiraLinha.innerText=media; primeiraLinha.style.opacity=1; }
+    });
+
     const melhor=treinos.length?Math.max(...treinos.map(t=>t.pontos)):0;
     document.getElementById('melhorJogo').innerHTML=`🏆 RECORD PESSOAL: ${melhor} PTS`;
     desenharGrafico();
@@ -225,13 +188,10 @@ function desenharGrafico(){
 function exportarPDF(){
     const { jsPDF } = window.jspdf;
     const doc=new jsPDF();
-    doc.setFontSize(20);
-    doc.text("BOWLERS - HISTÓRICO",10,20);
+    doc.setFontSize(20); doc.text("BOWLERS - HISTÓRICO",10,20);
     treinos.forEach((t,i)=>{ doc.setFontSize(12); doc.text(`${t.data} | ${t.pista} | ${t.pontos} Pts (Str: ${t.strikes} / Spa: ${t.spares}) | Bola Strike: ${t.bolaStrike||''} | Bola Spare: ${t.bolaSpare||''}`,10,35+(i*10)); });
     doc.save("historico_bowlers.pdf");
 }
-
-// Inicialização
 render();
 </script>
 
