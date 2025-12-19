@@ -6,8 +6,6 @@
 <title>BOWLERS - JP CALDEANO</title>
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" href="icon-512.png">
-<!-- Manifesto PWA inline -->
-<link rel="manifest" href="manifest.json">
 <style>
 body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; padding: 10px; margin: 0; }
 .card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
@@ -28,8 +26,6 @@ td.media-dia { background-color: #3498db; color: #000; font-weight: bold; opacit
 .add-bola-row { display: flex; gap: 5px; margin-top: 10px; }
 .add-btn { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 8px; width: 60px; }
 button.apagar-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; }
-
-/* Responsividade para celular */
 @media screen and (max-width: 600px) {
   table { display: block; overflow-x: auto; white-space: nowrap; }
   th, td { padding: 6px 4px; font-size: 10px; }
@@ -105,31 +101,152 @@ button.apagar-btn { background: #e74c3c; color: white; border: none; border-radi
 </div>
 </div>
 
+<!-- === SCRIPTS EMBUTIDOS === -->
 <script>
-// --- BIBLIOTECAS EMBUTIDAS ---
-// Chart.js (minified v5.3.3)
-</script>
-<script>
-// jsPDF (minified v2.5.1) embutido
+// --- CONFIGURAÇÃO INICIAL DAS BOLAS ---
+const listaPadrao = [
+  'Raw Hibrida (HAMMER)', 
+  'Ultimate Wrecker (ROTOGRIP)', 
+  'NoRulesExist (ROTOGRIP)',
+  'Fire Power (STORM)', 
+  'DV8', 
+  'RHINO', 
+  'BRUNSWICK'
+];
+let bolas = JSON.parse(localStorage.getItem('bolas')) || listaPadrao;
+let treinos = JSON.parse(localStorage.getItem('treinos')) || [];
+document.getElementById('data').valueAsDate = new Date();
+
+// Atualiza seletores e lista de bolas
+function atualizarTudoBolas() {
+    localStorage.setItem('bolas', JSON.stringify(bolas));
+    const selectStrike = document.getElementById('bolaStrike');
+    const selectSpare = document.getElementById('bolaSpare');
+    let htmlOpcoes = '<option value="">Selecc...</option>';
+    bolas.forEach(b => { htmlOpcoes += `<option value="${b}">${b}</option>`; });
+    selectStrike.innerHTML = htmlOpcoes;
+    selectSpare.innerHTML = htmlOpcoes;
+    const divLista = document.getElementById('listaBolas');
+    divLista.innerHTML = bolas.map((b,i)=>`
+        <div class="bola-item">
+            <span>${b}</span>
+            <button class="bola-del-btn" onclick="removerBola(${i})">X</button>
+        </div>
+    `).join('');
+}
+function adicionarNovaBola() {
+    const nome = document.getElementById('novaBolaNome').value;
+    if(nome.trim()!==""){ bolas.push(nome.trim()); document.getElementById('novaBolaNome').value=""; atualizarTudoBolas(); }
+}
+function removerBola(i){ if(confirm("Desejas eliminar esta bola da tua coleção?")){ bolas.splice(i,1); atualizarTudoBolas(); } }
+atualizarTudoBolas();
+
+// --- BOTÃO GUARDAR ---
+const guardarBtn = document.getElementById('guardarBtn');
+function guardar() {
+    const pts = document.getElementById('pontos').value;
+    const pst = document.getElementById('pista').value;
+    const dt = document.getElementById('data').value;
+    const strikeBola = document.getElementById('bolaStrike').value;
+    const spareBola = document.getElementById('bolaSpare').value;
+    if(!pts||!pst||!dt){alert("Faltam dados: Pista, Data e Pontos são obrigatórios!"); return;}
+    const reg = {data:dt, pontos:parseInt(pts), strikes:document.getElementById('strikes').value||0, spares:document.getElementById('spares').value||0, pista:pst, bolaStrike:strikeBola, bolaSpare:spareBola};
+    treinos.push(reg); localStorage.setItem('treinos', JSON.stringify(treinos));
+    document.getElementById('pontos').value=""; document.getElementById('strikes').value=""; document.getElementById('spares').value="";
+    // botão verde temporário
+    guardarBtn.style.background='#27ae60'; guardarBtn.innerText='STRIKE';
+    render();
+    setTimeout(()=>{ guardarBtn.style.background='#f39c12'; guardarBtn.innerText='GUARDAR REGISTO'; },5000);
+}
+
+// --- HISTÓRICO + MÉDIA ---
+function apagarTreino(i){ if(confirm("Eliminar este registo de treino?")){ treinos.splice(i,1); localStorage.setItem('treinos',JSON.stringify(treinos)); render(); } }
+function render(){
+    const ordenados=[...treinos].sort((a,b)=>new Date(a.data)-new Date(b.data));
+    let html=''; let lastDate=''; let diaTreinos=[]; 
+    ordenados.forEach((t,i)=>{
+        if(t.data!==lastDate){
+            if(diaTreinos.length>0){
+                const media=Math.round(diaTreinos.reduce((s,v)=>s+v.pontos,0)/diaTreinos.length);
+                html=html.replace('__media__',media);
+            }
+            lastDate=t.data; diaTreinos=[];
+            html+=`<tr>
+                <td>${t.data.split('-').reverse().slice(0,2).join('/')}</td>
+                <td>1</td>
+                <td>${t.pontos}</td>
+                <td>${t.strikes}</td>
+                <td>${t.spares}</td>
+                <td class="media-dia">__media__</td>
+                <td>${t.bolaStrike||''}</td>
+                <td>${t.bolaSpare||''}</td>
+                <td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td>
+            </tr>`;
+        } else {
+            html+=`<tr>
+                <td></td><td>1</td><td>${t.pontos}</td><td>${t.strikes}</td><td>${t.spares}</td>
+                <td></td>
+                <td>${t.bolaStrike||''}</td><td>${t.bolaSpare||''}</td>
+                <td><button class="apagar-btn" onclick="apagarTreino(${treinos.indexOf(t)})">X</button></td>
+            </tr>`;
+        }
+        diaTreinos.push(t);
+    });
+    if(diaTreinos.length>0){
+        const media=Math.round(diaTreinos.reduce((s,v)=>s+v.pontos,0)/diaTreinos.length);
+        html=html.replace('__media__',media);
+    }
+    document.getElementById('hist').innerHTML=html;
+    // Melhor pontuação
+    const melhor=treinos.length?Math.max(...treinos.map(t=>t.pontos)):0;
+    document.getElementById('melhorJogo').innerHTML=`🏆 RECORD PESSOAL: ${melhor} PTS`;
+    desenharGrafico();
+}
+
+// --- GRÁFICO (Chart.js embutido) ---
+let chartInstance=null;
+function desenharGrafico(){
+    const ctx=document.getElementById('grafico').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+    const ultimos=treinos.slice(-10).sort((a,b)=>new Date(a.data)-new Date(b.data));
+    chartInstance=new Chart(ctx,{
+        type:'line',
+        data:{ labels:ultimos.map(t=>t.data.split('-').reverse().slice(0,2).join('/')), datasets:[{ label:'Pontos', data:ultimos.map(t=>t.pontos), borderColor:'#f39c12', backgroundColor:'rgba(243,156,18,0.2)', tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#f39c12'}]},
+        options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{min:0,max:300,grid:{color:'#222'},ticks:{color:'#aaa'}}, x:{grid:{display:false},ticks:{color:'#aaa'}}}}
+    });
+}
+
+// --- EXPORTAR PDF ---
+function exportarPDF(){
+    const doc=new jsPDF();
+    doc.setFontSize(20);
+    doc.text("BOWLERS - HISTÓRICO",10,20);
+    treinos.forEach((t,i)=>{ doc.setFontSize(12); doc.text(`${t.data} | ${t.pista} | ${t.pontos} Pts (Str: ${t.strikes} / Spa: ${t.spares}) | Bola Strike: ${t.bolaStrike||''} | Bola Spare: ${t.bolaSpare||''}`,10,35+(i*10)); });
+    doc.save("historico_bowlers.pdf");
+}
+
+// Inicialização
+render();
 </script>
 
+<!-- === SERVICE WORKER === -->
 <script>
-// --- CÓDIGO DA APP (igual à versão final que testaste) ---
-</script>
-
-<script>
-// --- SERVICE WORKER EMBUTIDO ---
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-    const cacheName='bowlers-cache-v1';
-    const filesToCache=['/','/index.html','/icon-512.png'];
-    self.addEventListener('install',e=>{e.waitUntil(caches.open(cacheName).then(c=>c.addAll(filesToCache)));});
-    self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});
-  `],{type:'application/javascript'})))
-  .then(()=>console.log('Service Worker registrado com sucesso'))
-  .catch(err=>console.log('Service Worker falhou:',err));
+navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+const cacheName='bowlers-cache-v1';
+const filesToCache=['/','/index.html','/icon-512.png'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(cacheName).then(c=>c.addAll(filesToCache)));});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});
+`],{type:'application/javascript'})))
+.then(()=>console.log('Service Worker registrado com sucesso'))
+.catch(err=>console.log('Service Worker falhou:',err));
 }
 </script>
+
+<!-- Chart.js minified -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- jsPDF minified -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </body>
 </html>
