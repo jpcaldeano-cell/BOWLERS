@@ -7,6 +7,7 @@
 
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <link rel="icon" type="image/png" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,7 +20,7 @@ label{display:block;margin-top:10px;font-size:11px;color:#aaa;text-transform:upp
 input,select{width:100%;padding:12px;margin-top:5px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-size:16px}
 .row{display:flex;gap:8px}
 .row>div{flex:1}
-.guardar-btn{background:#f39c12;color:#000;width:100%;padding:15px;border-radius:8px;border:none;font-weight:900;margin-top:15px;font-size:18px}
+.guardar-btn{background:#f39c12;color:#000;width:100%;padding:15px;border-radius:8px;border:none;font-weight:900;margin-top:15px;font-size:18px;transition:background 0.3s}
 .guardar-btn.sucesso{background:#27ae60;color:#000}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
 th{color:#f39c12;border-bottom:1px solid #333;padding-bottom:6px}
@@ -38,7 +39,6 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 
 <div class="card">
 <h2>🎯 REGISTAR TREINO</h2>
-
 <label>Pista</label>
 <select id="pista">
 <option value="">Selecionar...</option>
@@ -46,6 +46,7 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <option>FIGUEIRA DA FOZ</option>
 <option>SINTRA Beloura</option>
 <option>PORTIMÃO</option>
+<option>OVAR Bowlikart</option>
 </select>
 
 <label>Data</label>
@@ -68,7 +69,7 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <div class="card">
 <h2>📈 EVOLUÇÃO</h2>
 <canvas id="grafico" style="max-height:180px"></canvas>
-<div id="melhorJogo" style="text-align:center;margin-top:10px;color:#f39c12;font-weight:bold"></div>
+<div id="melhorJogo" style="margin-top:10px;font-weight:bold"></div>
 </div>
 
 <div class="card">
@@ -104,10 +105,7 @@ const listaPadrao=[
 'NoRulesExist (ROTOGRIP)',
 'Fire Power (STORM)',
 'Ultimate Wrecker (ROTOGRIP)',
-'DV8',
-'RHINO',
-'BRUNSWICK',
-'Clear Belmo (STORM)'
+'DV8','RHINO','BRUNSWICK','Clear Belmo (STORM)'
 ];
 
 let bolas=JSON.parse(localStorage.getItem('bolas'))||listaPadrao;
@@ -121,8 +119,7 @@ const s1=document.getElementById('bolaStrike');
 const s2=document.getElementById('bolaSpare');
 s1.innerHTML=s2.innerHTML='<option></option>'+bolas.map(b=>`<option>${b}</option>`).join('');
 document.getElementById('listaBolas').innerHTML=bolas.map((b,i)=>`
-<div class="bola-item">${b}
-<button class="bola-del-btn" onclick="removerBola(${i})">X</button></div>`).join('');
+<div class="bola-item">${b}<button class="bola-del-btn" onclick="removerBola(${i})">X</button></div>`).join('');
 }
 
 function adicionarBola(){
@@ -190,11 +187,6 @@ hist.innerHTML+=`
 });
 });
 
-const melhor=treinos.length?Math.max(...treinos.map(t=>t.pontos)):0;
-const mediaTotal=treinos.length?Math.round(treinos.reduce((s,t)=>s+t.pontos,0)/treinos.length):0;
-document.getElementById('melhorJogo').innerHTML=
-`🏆 RECORD: ${melhor} | 📊 MÉDIA TOTAL: ${mediaTotal}`;
-
 desenharGrafico();
 }
 
@@ -210,10 +202,23 @@ datasets:[{data:ult.map(t=>t.pontos),borderColor:'#f39c12',fill:true}]
 },
 options:{plugins:{legend:{display:false}}}
 });
+
+// Atualizar Record e Média Pessoal depois do gráfico
+if(treinos.length){
+const melhor=Math.max(...treinos.map(t=>t.pontos));
+const mediaTotal=Math.round(treinos.reduce((s,t)=>s+t.pontos,0)/treinos.length);
+document.getElementById('melhorJogo').innerHTML=`
+<div style="text-align:center;color:#f39c12">🏆 RECORD PESSOAL: ${melhor}</div>
+<div style="text-align:center;color:#fff;margin-top:4px">🔥 MÉDIA PESSOAL: ${mediaTotal}</div>
+`;
+} else {
+document.getElementById('melhorJogo').innerHTML='';
+}
 }
 
 atualizarBolas();
 render();
 </script>
+
 </body>
 </html>
