@@ -20,18 +20,17 @@ label{display:block;margin-top:10px;font-size:11px;color:#aaa;text-transform:upp
 input,select{width:100%;padding:12px;margin-top:5px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-size:16px}
 .row{display:flex;gap:8px}
 .row>div{flex:1}
-.guardar-btn{background:#f39c12;color:#000;width:100%;padding:15px;border-radius:8px;border:none;font-weight:900;margin-top:15px;font-size:18px;transition:background 0.3s}
-.guardar-btn.sucesso{background:#27ae60;color:#000}
+.guardar-btn{background:#f39c12;color:#000;width:100%;padding:15px;border-radius:8px;border:none;font-weight:900;margin-top:15px;font-size:18px}
+.guardar-btn.sucesso{background:#27ae60}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-th{color:#f39c12;border-bottom:1px solid #333;padding-bottom:6px}
+th{color:#f39c12;border-bottom:1px solid #333}
 td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 .media-dia{background:#3498db;color:#000;font-weight:900;border-radius:6px}
-.apagar-btn{background:#c0392b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-weight:bold}
+.apagar-btn{background:#c0392b;color:#fff;border:none;border-radius:6px;padding:5px 10px}
 .bola-item{display:flex;justify-content:space-between;padding:8px;background:#1a1a1a;margin-bottom:5px;border-radius:6px}
 .bola-del-btn{background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px}
-.add-bola-btn{background:#27ae60;color:#000;border:none;border-radius:8px;padding:12px;font-weight:bold;width:100%;margin-top:10px;font-size:16px;cursor:pointer;transition:background 0.3s}
-.add-bola-btn:hover{background:#2ecc71}
-.footer{font-size:10px;opacity:0.5;text-align:center;margin-top:10px;line-height:1.2;}
+.add-bola-btn{background:#27ae60;color:#000;border:none;border-radius:8px;padding:12px;font-weight:bold;width:100%;margin-top:10px}
+.footer{font-size:10px;opacity:0.5;text-align:center;margin-top:10px}
 </style>
 </head>
 
@@ -41,14 +40,15 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 
 <div class="card">
 <h2>🎯 REGISTAR TREINO</h2>
+
 <label>Pista</label>
 <select id="pista">
-  <option value="">Selecionar...</option>
-  <option value="CALDAS Bowling">CALDAS Bowling</option>
-  <option value="FIGUEIRA DA FOZ">FIGUEIRA DA FOZ</option>
-  <option value="SINTRA Beloura">SINTRA Beloura</option>
-  <option value="PORTIMÃO">PORTIMÃO</option>
-  <option value="OVAR Bowlikart">OVAR Bowlikart</option>
+<option value="">Selecionar...</option>
+<option value="CALDAS Bowling">CALDAS Bowling</option>
+<option value="FIGUEIRA DA FOZ">FIGUEIRA DA FOZ</option>
+<option value="SINTRA Beloura">SINTRA Beloura</option>
+<option value="PORTIMÃO">PORTIMÃO</option>
+<option value="OVAR Bowlikart">OVAR Bowlikart</option>
 </select>
 
 <label>Data</label>
@@ -71,7 +71,7 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <div class="card">
 <h2>📈 EVOLUÇÃO</h2>
 <canvas id="grafico" style="max-height:180px"></canvas>
-<div id="melhorJogo" style="margin-top:10px;font-weight:bold"></div>
+<div id="melhorJogo"></div>
 </div>
 
 <div class="card">
@@ -79,16 +79,8 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <table>
 <thead>
 <tr>
-<th>DIA</th>
-<th>JOGO</th>
-<th>PTS</th>
-<th>STR</th>
-<th>SPA</th>
-<th>MED</th>
-<th>STRIKE</th>
-<th>SPARE</th>
-<th>PISTA</th>
-<th>APAGAR</th>
+<th>DIA</th><th>JOGO</th><th>PTS</th><th>STR</th><th>SPA</th>
+<th>MED</th><th>STRIKE</th><th>SPARE</th><th>PISTA</th><th>APAGAR</th>
 </tr>
 </thead>
 <tbody id="hist"></tbody>
@@ -101,12 +93,23 @@ td{text-align:center;padding:8px 0;border-bottom:1px solid #222}
 <input id="novaBola" placeholder="Nova bola">
 <button class="add-bola-btn" onclick="adicionarBola()">Adicionar</button>
 <div class="footer">
-<span>Criado por JP Caldeano</span><br>
-<span>Versão 1.0 / 2026</span>
+Criado por JP Caldeano<br>
+Versão 1.0 / 2026
 </div>
 </div>
 
+<!-- ================================================= -->
+<!-- SERVICE WORKER (OFFLINE REAL)                     -->
+<!-- ================================================= -->
 <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+
+<script>
+/* ================= LÓGICA DA APP ================= */
+
 const listaPadrao=[
 'Raw Hibrida (HAMMER)',
 'NoRulesExist (ROTOGRIP)',
@@ -124,16 +127,15 @@ let chart=null;
 
 function atualizarBolas(){
 localStorage.setItem('bolas',JSON.stringify(bolas));
-const s1=document.getElementById('bolaStrike');
-const s2=document.getElementById('bolaSpare');
+const s1=bolaStrike,s2=bolaSpare;
 s1.innerHTML=s2.innerHTML='<option></option>'+bolas.map(b=>`<option>${b}</option>`).join('');
-document.getElementById('listaBolas').innerHTML=bolas.map((b,i)=>`
+listaBolas.innerHTML=bolas.map((b,i)=>`
 <div class="bola-item">${b}<button class="bola-del-btn" onclick="removerBola(${i})">X</button></div>`).join('');
 }
 
 function adicionarBola(){
-const n=document.getElementById('novaBola').value.trim();
-if(n){bolas.push(n);document.getElementById('novaBola').value='';atualizarBolas();}
+const n=novaBola.value.trim();
+if(n){bolas.push(n);novaBola.value='';atualizarBolas();}
 }
 
 function removerBola(i){
@@ -141,22 +143,21 @@ if(confirm('Apagar bola?')){bolas.splice(i,1);atualizarBolas();}
 }
 
 function guardar(){
-const btn=document.getElementById('guardarBtn');
-const pistaSelecionada = document.getElementById('pista').value;
+const btn=guardarBtn;
 treinos.push({
-  data: document.getElementById('data').value,
-  pontos: +document.getElementById('pontos').value,
-  strikes: +document.getElementById('strikes').value || 0,
-  spares: +document.getElementById('spares').value || 0,
-  bolaStrike: document.getElementById('bolaStrike').value,
-  bolaSpare: document.getElementById('bolaSpare').value,
-  pista: pistaSelecionada
+data:data.value,
+pontos:+pontos.value,
+strikes:+strikes.value||0,
+spares:+spares.value||0,
+bolaStrike:bolaStrike.value,
+bolaSpare:bolaSpare.value,
+pista:pista.value
 });
 localStorage.setItem('treinos',JSON.stringify(treinos));
 btn.classList.add('sucesso');
 btn.innerText='STRIKE';
 setTimeout(()=>{btn.classList.remove('sucesso');btn.innerText='GUARDAR REGISTO'},5000);
-document.getElementById('pontos').value=document.getElementById('strikes').value=document.getElementById('spares').value='';
+pontos.value=strikes.value=spares.value='';
 render();
 }
 
@@ -169,14 +170,12 @@ render();
 }
 
 function render(){
-const hist=document.getElementById('hist');
 hist.innerHTML='';
 const orden=[...treinos].sort((a,b)=>new Date(a.data)-new Date(b.data));
 let dias={};
 
 orden.forEach(t=>{
-if(!dias[t.data])dias[t.data]=[];
-dias[t.data].push(t);
+(dias[t.data]=dias[t.data]||[]).push(t);
 });
 
 Object.keys(dias).forEach(d=>{
@@ -185,12 +184,12 @@ const media=Math.round(jogos.reduce((s,j)=>s+j.pontos,0)/jogos.length);
 jogos.forEach((j,i)=>{
 hist.innerHTML+=`
 <tr>
-<td>${i==0?d.split('-').reverse().slice(0,2).join('/'):''}</td>
+<td>${i?'' : d.split('-').reverse().slice(0,2).join('/')}</td>
 <td>${i+1}</td>
 <td>${j.pontos}</td>
 <td>${j.strikes}</td>
 <td>${j.spares}</td>
-<td>${i==0?`<span class="media-dia">${media}</span>`:''}</td>
+<td>${i?'' : `<span class="media-dia">${media}</span>`}</td>
 <td>${j.bolaStrike}</td>
 <td>${j.bolaSpare}</td>
 <td>${j.pista}</td>
@@ -203,33 +202,28 @@ desenharGrafico();
 }
 
 function desenharGrafico(){
-const ctx=document.getElementById('grafico');
 if(chart)chart.destroy();
 const ult=[...treinos].sort((a,b)=>new Date(a.data)-new Date(b.data)).slice(-10);
-chart=new Chart(ctx,{
+chart=new Chart(grafico,{
 type:'line',
-data:{
-labels:ult.map(t=>t.data.split('-').reverse().slice(0,2).join('/')),
-datasets:[{data:ult.map(t=>t.pontos),borderColor:'#f39c12',fill:true}]
-},
+data:{labels:ult.map(t=>t.data.split('-').reverse().slice(0,2).join('/')),
+datasets:[{data:ult.map(t=>t.pontos),borderColor:'#f39c12',fill:true}]},
 options:{plugins:{legend:{display:false}}}
 });
 
-// Record + Média Pessoal em duas linhas, centralizado
 if(treinos.length){
 const melhor=Math.max(...treinos.map(t=>t.pontos));
-const mediaTotal=Math.round(treinos.reduce((s,t)=>s+t.pontos,0)/treinos.length);
-document.getElementById('melhorJogo').innerHTML=`
+const media=Math.round(treinos.reduce((s,t)=>s+t.pontos,0)/treinos.length);
+melhorJogo.innerHTML=`
 <div style="text-align:center;color:#f39c12">🏆 RECORD PESSOAL: ${melhor}</div>
-<div style="text-align:center;color:#fff;margin-top:4px">🔥 MÉDIA PESSOAL: ${mediaTotal}</div>
-`;
-} else {
-document.getElementById('melhorJogo').innerHTML='';
+<div style="text-align:center;color:#fff">🔥 MÉDIA PESSOAL: ${media}</div>`;
 }
 }
 
 atualizarBolas();
 render();
+
+/* ================================================= */
 </script>
 
 </body>
